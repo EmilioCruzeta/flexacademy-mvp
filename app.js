@@ -1,5 +1,17 @@
+const DEMO_USER = Object.freeze({
+  username: "admin",
+  password: "admin",
+  displayName: "Administrador",
+});
+
+const STORAGE_KEYS = Object.freeze({
+  session: "flexacademy.session",
+  state: "flexacademy.state",
+});
+
 const courses = [
   {
+    id: "fullstack-dotnet-react",
     title: "Full Stack con C#.NET y React",
     type: "stem",
     level: "Intermedio",
@@ -7,6 +19,7 @@ const courses = [
     description: "APIs, Entity Framework Core, componentes reutilizables y despliegue en Azure.",
   },
   {
+    id: "machine-learning",
     title: "Machine Learning Aplicado",
     type: "stem",
     level: "Inicial",
@@ -14,6 +27,7 @@ const courses = [
     description: "Modelos supervisados, evaluacion, sesgos y uso responsable de IA.",
   },
   {
+    id: "azure-cloud",
     title: "Cloud Computing con Azure",
     type: "stem",
     level: "Inicial",
@@ -21,6 +35,7 @@ const courses = [
     description: "Azure Functions, Cosmos DB, almacenamiento, seguridad y costos.",
   },
   {
+    id: "cybersecurity",
     title: "Ciberseguridad y Privacidad",
     type: "stem",
     level: "Intermedio",
@@ -28,6 +43,7 @@ const courses = [
     description: "OAuth 2.0, gestion de datos, riesgos, cumplimiento y respuesta a incidentes.",
   },
   {
+    id: "accessibility",
     title: "Accesibilidad para Educacion Digital",
     type: "career",
     level: "Avanzado",
@@ -35,6 +51,7 @@ const courses = [
     description: "Diseno inclusivo, lectores de pantalla, navegacion por teclado y WCAG.",
   },
   {
+    id: "leadership",
     title: "Liderazgo y Gestion de Equipos",
     type: "career",
     level: "Inicial",
@@ -44,55 +61,278 @@ const courses = [
 ];
 
 const recommendations = {
-  software: "Tu ruta ideal empieza con Full Stack con C#.NET y React, seguido de Cloud Computing con Azure.",
-  ai: "Te conviene iniciar con Machine Learning Aplicado y reforzar etica de IA antes de modelos avanzados.",
-  cloud: "La ruta recomendada combina Cloud Computing con Azure, seguridad OAuth 2.0 y costos de infraestructura.",
-  security: "Empieza por Ciberseguridad y Privacidad, luego suma laboratorios de autenticacion y cumplimiento.",
-  data: "Te sugiero una ruta de analisis de datos con SQL/NoSQL, visualizacion y fundamentos estadisticos.",
-  accessibility: "Tu ruta debe priorizar Accesibilidad para Educacion Digital y pruebas con usuarios reales.",
+  software: {
+    label: "Desarrollo de Software",
+    message: "Tu ruta ideal empieza con Full Stack con C#.NET y React, seguido de Cloud Computing con Azure.",
+    action: "Inscribirte en Full Stack",
+  },
+  ai: {
+    label: "Inteligencia Artificial",
+    message: "Te conviene iniciar con Machine Learning Aplicado y reforzar etica de IA antes de modelos avanzados.",
+    action: "Completar modulo de IA",
+  },
+  cloud: {
+    label: "Cloud Computing",
+    message: "La ruta recomendada combina Cloud Computing con Azure, seguridad OAuth 2.0 y costos de infraestructura.",
+    action: "Revisar laboratorio Azure",
+  },
+  security: {
+    label: "Ciberseguridad",
+    message: "Empieza por Ciberseguridad y Privacidad, luego suma laboratorios de autenticacion y cumplimiento.",
+    action: "Practicar OAuth 2.0",
+  },
+  data: {
+    label: "Analisis de Datos",
+    message: "Te sugiero una ruta de analisis de datos con SQL/NoSQL, visualizacion y fundamentos estadisticos.",
+    action: "Abrir laboratorio SQL",
+  },
+  accessibility: {
+    label: "Educacion Inclusiva",
+    message: "Tu ruta debe priorizar Accesibilidad para Educacion Digital y pruebas con usuarios reales.",
+    action: "Validar accesibilidad",
+  },
 };
 
-const courseGrid = document.querySelector("#courseGrid");
-const filterButtons = document.querySelectorAll("[data-filter]");
-const navLinks = document.querySelectorAll(".nav a");
-const largeTextToggle = document.querySelector("#largeTextToggle");
-const contrastToggle = document.querySelector("#contrastToggle");
-const diagnosticForm = document.querySelector("#diagnosticForm");
-const trackSelect = document.querySelector("#trackSelect");
-const levelRange = document.querySelector("#levelRange");
-const chatForm = document.querySelector("#chatForm");
-const chatInput = document.querySelector("#chatInput");
-const chatLog = document.querySelector("#chatLog");
+const defaultState = Object.freeze({
+  enrolledCourseIds: [],
+  completedCourseIds: [],
+  notices: ["Bienvenido al panel admin de FlexAcademy."],
+  selectedTrack: null,
+  weeklyProgress: 68,
+  alerts: 0,
+});
+
+const state = loadState();
+
+const elements = {
+  loginScreen: document.querySelector("#loginScreen"),
+  appShell: document.querySelector("#appShell"),
+  loginForm: document.querySelector("#loginForm"),
+  usernameInput: document.querySelector("#usernameInput"),
+  passwordInput: document.querySelector("#passwordInput"),
+  rememberInput: document.querySelector("#rememberInput"),
+  fillDemoButton: document.querySelector("#fillDemoButton"),
+  loginError: document.querySelector("#loginError"),
+  activeUserLabel: document.querySelector("#activeUserLabel"),
+  logoutButton: document.querySelector("#logoutButton"),
+  courseGrid: document.querySelector("#courseGrid"),
+  filterButtons: document.querySelectorAll("[data-filter]"),
+  navLinks: document.querySelectorAll(".nav a"),
+  largeTextToggle: document.querySelector("#largeTextToggle"),
+  contrastToggle: document.querySelector("#contrastToggle"),
+  diagnosticForm: document.querySelector("#diagnosticForm"),
+  trackSelect: document.querySelector("#trackSelect"),
+  levelRange: document.querySelector("#levelRange"),
+  weeklyProgress: document.querySelector("#weeklyProgress"),
+  enrolledMetric: document.querySelector("#enrolledMetric"),
+  alertMetric: document.querySelector("#alertMetric"),
+  currentTrackLabel: document.querySelector("#currentTrackLabel"),
+  nextActionLabel: document.querySelector("#nextActionLabel"),
+  chatForm: document.querySelector("#chatForm"),
+  chatInput: document.querySelector("#chatInput"),
+  chatLog: document.querySelector("#chatLog"),
+  forumList: document.querySelector("#forumList"),
+  noticeForm: document.querySelector("#noticeForm"),
+  noticeInput: document.querySelector("#noticeInput"),
+  noticeList: document.querySelector("#noticeList"),
+};
+
+function loadState() {
+  try {
+    const savedState = JSON.parse(localStorage.getItem(STORAGE_KEYS.state));
+    return { ...defaultState, ...savedState };
+  } catch {
+    return { ...defaultState };
+  }
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEYS.state, JSON.stringify(state));
+}
+
+function getSession() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.session));
+  } catch {
+    return null;
+  }
+}
+
+function setSession(username, remember) {
+  const session = {
+    username,
+    displayName: DEMO_USER.displayName,
+    signedInAt: new Date().toISOString(),
+  };
+
+  if (remember) {
+    localStorage.setItem(STORAGE_KEYS.session, JSON.stringify(session));
+    return;
+  }
+
+  sessionStorage.setItem(STORAGE_KEYS.session, JSON.stringify(session));
+}
+
+function clearSession() {
+  localStorage.removeItem(STORAGE_KEYS.session);
+  sessionStorage.removeItem(STORAGE_KEYS.session);
+}
+
+function getActiveSession() {
+  return getSession() || JSON.parse(sessionStorage.getItem(STORAGE_KEYS.session) || "null");
+}
+
+function setAuthenticated(session) {
+  document.body.classList.toggle("is-authenticated", Boolean(session));
+  document.body.classList.toggle("is-locked", !session);
+  elements.appShell.setAttribute("aria-hidden", session ? "false" : "true");
+
+  if (session) {
+    elements.activeUserLabel.textContent = session.displayName || session.username;
+    renderApp();
+    drawLearningMap();
+    return;
+  }
+
+  elements.usernameInput.focus();
+}
+
+function validateCredentials(username, password) {
+  return username === DEMO_USER.username && password === DEMO_USER.password;
+}
+
+function createElement(tagName, options = {}) {
+  const element = document.createElement(tagName);
+
+  if (options.className) element.className = options.className;
+  if (options.text) element.textContent = options.text;
+  if (options.type) element.type = options.type;
+  if (options.ariaLabel) element.setAttribute("aria-label", options.ariaLabel);
+  if (options.dataset) {
+    Object.entries(options.dataset).forEach(([key, value]) => {
+      element.dataset[key] = value;
+    });
+  }
+
+  return element;
+}
+
+function renderApp() {
+  renderCourses(getActiveFilter());
+  renderMetrics();
+  renderNotices();
+}
+
+function getActiveFilter() {
+  const activeButton = [...elements.filterButtons].find((button) => button.classList.contains("active"));
+  return activeButton?.dataset.filter || "all";
+}
+
+function renderMetrics() {
+  const selected = state.selectedTrack ? recommendations[state.selectedTrack] : null;
+
+  elements.weeklyProgress.textContent = `${state.weeklyProgress}%`;
+  elements.enrolledMetric.textContent = String(state.enrolledCourseIds.length);
+  elements.alertMetric.textContent = String(state.alerts);
+  elements.currentTrackLabel.textContent = selected?.label || "Sin diagnostico";
+  elements.nextActionLabel.textContent = selected?.action || "Completar diagnostico";
+}
 
 function renderCourses(filter = "all") {
   const visibleCourses = filter === "all" ? courses : courses.filter((course) => course.type === filter);
+  elements.courseGrid.replaceChildren(...visibleCourses.map(createCourseCard));
+}
 
-  courseGrid.innerHTML = visibleCourses
-    .map(
-      (course) => `
-        <article class="course-card">
-          <span class="tag">${course.level}</span>
-          <strong>${course.title}</strong>
-          <p>${course.description}</p>
-          <div class="progress" aria-label="Progreso ${course.progress}%">
-            <span style="width: ${course.progress}%"></span>
-          </div>
-          <button class="button secondary" type="button">Ver ruta</button>
-        </article>
-      `,
-    )
-    .join("");
+function createCourseCard(course) {
+  const isEnrolled = state.enrolledCourseIds.includes(course.id);
+  const isCompleted = state.completedCourseIds.includes(course.id);
+  const card = createElement("article", {
+    className: `course-card${isEnrolled ? " is-enrolled" : ""}`,
+  });
+
+  const tag = createElement("span", { className: "tag", text: course.level });
+  const title = createElement("strong", { text: course.title });
+  const description = createElement("p", { text: course.description });
+  const progress = createElement("div", {
+    className: "progress",
+    ariaLabel: `Progreso ${course.progress}%`,
+  });
+  const progressBar = createElement("span");
+  const actions = createElement("div", { className: "course-actions" });
+  const enrollButton = createElement("button", {
+    className: "button secondary",
+    text: isEnrolled ? "Inscrito" : "Inscribirme",
+    type: "button",
+    dataset: { action: "enroll", courseId: course.id },
+  });
+  const completeButton = createElement("button", {
+    className: "button primary",
+    text: isCompleted ? "Completado" : "Completar",
+    type: "button",
+    dataset: { action: "complete", courseId: course.id },
+  });
+
+  progressBar.style.width = `${course.progress}%`;
+  enrollButton.disabled = isEnrolled;
+  completeButton.disabled = isCompleted;
+  progress.append(progressBar);
+  actions.append(enrollButton, completeButton);
+  card.append(tag, title, description, progress, actions);
+
+  return card;
+}
+
+function updateCourse(action, courseId) {
+  if (action === "enroll" && !state.enrolledCourseIds.includes(courseId)) {
+    state.enrolledCourseIds.push(courseId);
+    state.alerts += 1;
+    addChatMessage("Tutor", "Curso inscrito. Te sugiero reservar 25 minutos para el primer modulo.");
+  }
+
+  if (action === "complete" && !state.completedCourseIds.includes(courseId)) {
+    state.completedCourseIds.push(courseId);
+    state.weeklyProgress = Math.min(100, state.weeklyProgress + 5);
+    addChatMessage("Tutor", "Excelente avance. Actualice tu progreso semanal y desbloquee la siguiente practica.");
+  }
+
+  saveState();
+  renderApp();
 }
 
 function addChatMessage(author, message) {
-  const line = document.createElement("p");
-  line.innerHTML = `<strong>${author}:</strong> ${message}`;
-  chatLog.appendChild(line);
-  chatLog.scrollTop = chatLog.scrollHeight;
+  const line = createElement("p");
+  const strong = createElement("strong", { text: `${author}:` });
+  line.append(strong, ` ${message}`);
+  elements.chatLog.appendChild(line);
+  elements.chatLog.scrollTop = elements.chatLog.scrollHeight;
+}
+
+function renderNotices() {
+  if (!state.notices.length) {
+    elements.noticeList.replaceChildren(createElement("p", { text: "No hay avisos activos." }));
+    return;
+  }
+
+  const notices = state.notices.map((notice, index) => {
+    const item = createElement("div", { className: "notice-item" });
+    const text = createElement("span", { text: notice });
+    const button = createElement("button", {
+      text: "Eliminar",
+      type: "button",
+      dataset: { noticeIndex: String(index) },
+    });
+
+    item.append(text, button);
+    return item;
+  });
+
+  elements.noticeList.replaceChildren(...notices);
 }
 
 function drawLearningMap() {
   const canvas = document.querySelector("#learningMap");
+  if (!canvas) return;
+
   const ctx = canvas.getContext("2d");
   const width = canvas.width;
   const height = canvas.height;
@@ -138,53 +378,116 @@ function drawLearningMap() {
   });
 }
 
-filterButtons.forEach((button) => {
+elements.loginForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const username = elements.usernameInput.value.trim();
+  const password = elements.passwordInput.value;
+
+  if (!validateCredentials(username, password)) {
+    elements.loginError.textContent = "Usuario o clave incorrectos.";
+    elements.passwordInput.value = "";
+    elements.passwordInput.focus();
+    return;
+  }
+
+  elements.loginError.textContent = "";
+  setSession(username, elements.rememberInput.checked);
+  setAuthenticated(getActiveSession());
+});
+
+elements.fillDemoButton.addEventListener("click", () => {
+  elements.usernameInput.value = DEMO_USER.username;
+  elements.passwordInput.value = DEMO_USER.password;
+  elements.loginError.textContent = "";
+});
+
+elements.logoutButton.addEventListener("click", () => {
+  clearSession();
+  setAuthenticated(null);
+});
+
+elements.filterButtons.forEach((button) => {
   button.addEventListener("click", () => {
-    filterButtons.forEach((item) => item.classList.remove("active"));
+    elements.filterButtons.forEach((item) => item.classList.remove("active"));
     button.classList.add("active");
     renderCourses(button.dataset.filter);
   });
 });
 
-navLinks.forEach((link) => {
+elements.navLinks.forEach((link) => {
   link.addEventListener("click", () => {
-    navLinks.forEach((item) => item.classList.remove("active"));
+    elements.navLinks.forEach((item) => item.classList.remove("active"));
     link.classList.add("active");
   });
 });
 
-largeTextToggle.addEventListener("change", () => {
-  document.body.classList.toggle("large-text", largeTextToggle.checked);
+elements.largeTextToggle.addEventListener("change", () => {
+  document.body.classList.toggle("large-text", elements.largeTextToggle.checked);
 });
 
-contrastToggle.addEventListener("change", () => {
-  document.body.classList.toggle("high-contrast", contrastToggle.checked);
+elements.contrastToggle.addEventListener("change", () => {
+  document.body.classList.toggle("high-contrast", elements.contrastToggle.checked);
 });
 
-diagnosticForm.addEventListener("submit", (event) => {
+elements.diagnosticForm.addEventListener("submit", (event) => {
   event.preventDefault();
-  const selectedTrack = trackSelect.value;
-  const level = Number(levelRange.value);
+  const selectedTrack = elements.trackSelect.value;
+  const level = Number(elements.levelRange.value);
   const boost = Math.min(96, 52 + level * 8);
 
-  document.querySelector("#weeklyProgress").textContent = `${boost}%`;
-  addChatMessage("Tutor", recommendations[selectedTrack]);
+  state.selectedTrack = selectedTrack;
+  state.weeklyProgress = boost;
+  saveState();
+  renderMetrics();
+  addChatMessage("Tutor", recommendations[selectedTrack].message);
   document.querySelector("#tutor").scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
-chatForm.addEventListener("submit", (event) => {
+elements.chatForm.addEventListener("submit", (event) => {
   event.preventDefault();
-  const question = chatInput.value.trim();
+  const question = elements.chatInput.value.trim();
   if (!question) return;
 
   addChatMessage("Tu", question);
-  chatInput.value = "";
+  elements.chatInput.value = "";
   addChatMessage(
     "Tutor",
     "Buena pregunta. Para avanzar hoy, completa una practica corta, revisa la retroalimentacion y agenda una evaluacion dinamica de 10 minutos.",
   );
 });
 
-renderCourses();
-drawLearningMap();
+elements.courseGrid.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-action]");
+  if (!button) return;
+  updateCourse(button.dataset.action, button.dataset.courseId);
+});
+
+elements.forumList.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-topic]");
+  if (!button) return;
+  addChatMessage("Tutor", `Te conecte con la comunidad: ${button.dataset.topic}.`);
+  document.querySelector("#tutor").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+elements.noticeForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const notice = elements.noticeInput.value.trim();
+  if (!notice) return;
+
+  state.notices.unshift(notice);
+  elements.noticeInput.value = "";
+  saveState();
+  renderNotices();
+});
+
+elements.noticeList.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-notice-index]");
+  if (!button) return;
+
+  state.notices.splice(Number(button.dataset.noticeIndex), 1);
+  saveState();
+  renderNotices();
+});
+
 window.addEventListener("resize", drawLearningMap);
+setAuthenticated(getActiveSession());

@@ -6,76 +6,157 @@
     <title>FlexAcademy | Aprendizaje adaptativo</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body>
-    <aside class="sidebar" aria-label="Navegacion principal">
-      <div class="brand">
-        <span class="brand-mark" aria-hidden="true">F</span>
-        <div>
-          <strong>FlexAcademy</strong>
-          <span>Adaptive STEM Learning</span>
+  <body class="is-locked">
+    <section class="login-screen" id="loginScreen" aria-labelledby="loginTitle">
+      <div class="login-visual" aria-hidden="true">
+        <span class="brand-mark">F</span>
+        <div class="login-orbit">
+          <span>IA</span>
+          <span>STEM</span>
+          <span>AA</span>
         </div>
       </div>
 
-      <nav class="nav">
-        <a class="active" href="#dashboard">Dashboard</a>
-        <a href="#courses">Cursos</a>
-        <a href="#tutor">Tutor IA</a>
-        <a href="#certifications">Certificaciones</a>
-        <a href="#community">Comunidad</a>
-        <a href="#resources">Recursos</a>
-      </nav>
+      <form class="login-card" id="loginForm" novalidate>
+        <p class="eyebrow">Acceso seguro</p>
+        <h1 id="loginTitle">FlexAcademy</h1>
+        <p>
+          Entra al panel de aprendizaje adaptativo para administrar cursos,
+          revisar progreso y probar las funciones del MVP.
+        </p>
 
-      <div class="accessibility-panel" aria-label="Preferencias de accesibilidad">
-        <p>Accesibilidad</p>
-        <label>
-          <input id="largeTextToggle" type="checkbox" />
-          Texto ampliado
-        </label>
-        <label>
-          <input id="contrastToggle" type="checkbox" />
-          Alto contraste
-        </label>
-      </div>
-    </aside>
+        <div class="demo-credentials" aria-label="Credenciales de prueba">
+          <span>Usuario: <strong>admin</strong></span>
+          <span>Clave: <strong>admin</strong></span>
+        </div>
 
-    <main>
-      <section id="dashboard" class="hero section-band">
-        <div class="hero-copy">
-          <p class="eyebrow">MVP educativo inclusivo</p>
-          <h1>FlexAcademy</h1>
-          <p>
-            Plataforma de aprendizaje adaptativo para cursos de tecnologia, IA,
-            datos, nube, accesibilidad y liderazgo profesional.
-          </p>
-          <div class="hero-actions">
-            <a class="button primary" href="#diagnostic">Iniciar diagnostico</a>
-            <a class="button secondary" href="#courses">Explorar cursos</a>
+        <label>
+          Usuario
+          <input id="usernameInput" name="username" type="text" autocomplete="username" required />
+        </label>
+
+        <label>
+          Clave
+          <input
+            id="passwordInput"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            required
+          />
+        </label>
+
+        <div class="form-row">
+          <label class="inline-check">
+            <input id="rememberInput" type="checkbox" checked />
+            Mantener sesion
+          </label>
+          <button class="text-button" id="fillDemoButton" type="button">Usar prueba</button>
+        </div>
+
+        <p class="form-error" id="loginError" role="alert"></p>
+        <button class="button primary" type="submit">Entrar</button>
+      </form>
+    </section>
+
+    <div class="app-shell" id="appShell" aria-hidden="true">
+      <aside class="sidebar" aria-label="Navegacion principal">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">F</span>
+          <div>
+            <strong>FlexAcademy</strong>
+            <span>Adaptive STEM Learning</span>
           </div>
         </div>
 
-        <div class="learning-visual" aria-label="Mapa visual de aprendizaje adaptativo">
-          <canvas id="learningMap" width="680" height="440"></canvas>
-        </div>
-      </section>
+        <nav class="nav">
+          <a class="active" href="#dashboard">Dashboard</a>
+          <a href="#courses">Cursos</a>
+          <a href="#tutor">Tutor IA</a>
+          <a href="#certifications">Certificaciones</a>
+          <a href="#community">Comunidad</a>
+          <a href="#resources">Recursos</a>
+          <a href="#admin">Admin</a>
+        </nav>
 
-      <section class="metrics section-band" aria-label="Indicadores principales">
-        <article>
-          <span>Progreso semanal</span>
-          <strong id="weeklyProgress">68%</strong>
-        </article>
-        <article>
-          <span>Racha de estudio</span>
-          <strong>12 dias</strong>
-        </article>
-        <article>
-          <span>Certificados activos</span>
-          <strong>3</strong>
-        </article>
-        <article>
-          <span>Indice de accesibilidad</span>
-          <strong>AA</strong>
-        </article>
-      </section>
+        <div class="user-panel">
+          <span>Sesion activa</span>
+          <strong id="activeUserLabel">admin</strong>
+          <button class="button ghost" id="logoutButton" type="button">Salir</button>
+        </div>
+
+        <div class="accessibility-panel" aria-label="Preferencias de accesibilidad">
+          <p>Accesibilidad</p>
+          <label>
+            <input id="largeTextToggle" type="checkbox" />
+            Texto ampliado
+          </label>
+          <label>
+            <input id="contrastToggle" type="checkbox" />
+            Alto contraste
+          </label>
+        </div>
+      </aside>
+
+      <main>
+        <section id="dashboard" class="hero section-band">
+          <div class="hero-copy">
+            <p class="eyebrow">MVP educativo inclusivo</p>
+            <h1>FlexAcademy</h1>
+            <p>
+              Plataforma de aprendizaje adaptativo para cursos de tecnologia, IA,
+              datos, nube, accesibilidad y liderazgo profesional.
+            </p>
+            <div class="hero-actions">
+              <a class="button primary" href="#diagnostic">Iniciar diagnostico</a>
+              <a class="button secondary" href="#courses">Explorar cursos</a>
+            </div>
+          </div>
+
+          <div class="learning-visual" aria-label="Mapa visual de aprendizaje adaptativo">
+            <canvas id="learningMap" width="680" height="440"></canvas>
+          </div>
+        </section>
+
+        <section class="metrics section-band" aria-label="Indicadores principales">
+          <article>
+            <span>Progreso semanal</span>
+            <strong id="weeklyProgress">68%</strong>
+          </article>
+          <article>
+            <span>Racha de estudio</span>
+            <strong id="streakMetric">12 dias</strong>
+          </article>
+          <article>
+            <span>Cursos inscritos</span>
+            <strong id="enrolledMetric">0</strong>
+          </article>
+          <article>
+            <span>Indice de accesibilidad</span>
+            <strong>AA</strong>
+          </article>
+        </section>
+
+        <section class="section-band status-band" aria-label="Actividad de la plataforma">
+          <div>
+            <p class="eyebrow">Operacion</p>
+            <h2>Panel de actividad</h2>
+          </div>
+          <div class="activity-grid">
+            <article>
+              <span>Ruta actual</span>
+              <strong id="currentTrackLabel">Sin diagnostico</strong>
+            </article>
+            <article>
+              <span>Proxima accion</span>
+              <strong id="nextActionLabel">Completar diagnostico</strong>
+            </article>
+            <article>
+              <span>Alertas</span>
+              <strong id="alertMetric">0</strong>
+            </article>
+          </div>
+        </section>
 
       <section id="diagnostic" class="section-grid">
         <div>
@@ -189,10 +270,10 @@
             aprendizaje colaborativo e inclusivo.
           </p>
         </div>
-        <div class="forum-list">
-          <button>Grupo: IA aplicada para principiantes</button>
-          <button>Foro: Preguntas de C#.NET</button>
-          <button>Mentoria: Preparacion para certificacion Azure</button>
+        <div class="forum-list" id="forumList">
+          <button type="button" data-topic="IA aplicada para principiantes">Grupo: IA aplicada para principiantes</button>
+          <button type="button" data-topic="Preguntas de C#.NET">Foro: Preguntas de C#.NET</button>
+          <button type="button" data-topic="Preparacion para certificacion Azure">Mentoria: Preparacion para certificacion Azure</button>
         </div>
       </section>
 
@@ -208,7 +289,31 @@
           <article>Simulacion de entrevista tecnica</article>
         </div>
       </section>
-    </main>
+
+        <section id="admin" class="section-grid admin-section">
+          <div>
+            <p class="eyebrow">Administracion</p>
+            <h2>Panel admin</h2>
+            <p>
+              Vista de prueba para validar tareas operativas del MVP: revisar
+              actividad, crear avisos y simular acciones administrativas.
+            </p>
+          </div>
+
+          <div class="admin-tools">
+            <form class="notice-form" id="noticeForm">
+              <label>
+                Nuevo aviso
+                <input id="noticeInput" type="text" maxlength="120" placeholder="Ej. Nueva mentoria disponible" />
+              </label>
+              <button class="button primary" type="submit">Publicar aviso</button>
+            </form>
+
+            <div class="notice-list" id="noticeList" aria-live="polite"></div>
+          </div>
+        </section>
+      </main>
+    </div>
 
     <script src="app.js"></script>
   </body>
