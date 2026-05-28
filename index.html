@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FlexAcademy | Aprendizaje adaptativo</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <aside class="sidebar" aria-label="Navegacion principal">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">F</span>
+        <div>
+          <strong>FlexAcademy</strong>
+          <span>Adaptive STEM Learning</span>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a class="active" href="#dashboard">Dashboard</a>
+        <a href="#courses">Cursos</a>
+        <a href="#tutor">Tutor IA</a>
+        <a href="#certifications">Certificaciones</a>
+        <a href="#community">Comunidad</a>
+        <a href="#resources">Recursos</a>
+      </nav>
+
+      <div class="accessibility-panel" aria-label="Preferencias de accesibilidad">
+        <p>Accesibilidad</p>
+        <label>
+          <input id="largeTextToggle" type="checkbox" />
+          Texto ampliado
+        </label>
+        <label>
+          <input id="contrastToggle" type="checkbox" />
+          Alto contraste
+        </label>
+      </div>
+    </aside>
+
+    <main>
+      <section id="dashboard" class="hero section-band">
+        <div class="hero-copy">
+          <p class="eyebrow">MVP educativo inclusivo</p>
+          <h1>FlexAcademy</h1>
+          <p>
+            Plataforma de aprendizaje adaptativo para cursos de tecnologia, IA,
+            datos, nube, accesibilidad y liderazgo profesional.
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="#diagnostic">Iniciar diagnostico</a>
+            <a class="button secondary" href="#courses">Explorar cursos</a>
+          </div>
+        </div>
+
+        <div class="learning-visual" aria-label="Mapa visual de aprendizaje adaptativo">
+          <canvas id="learningMap" width="680" height="440"></canvas>
+        </div>
+      </section>
+
+      <section class="metrics section-band" aria-label="Indicadores principales">
+        <article>
+          <span>Progreso semanal</span>
+          <strong id="weeklyProgress">68%</strong>
+        </article>
+        <article>
+          <span>Racha de estudio</span>
+          <strong>12 dias</strong>
+        </article>
+        <article>
+          <span>Certificados activos</span>
+          <strong>3</strong>
+        </article>
+        <article>
+          <span>Indice de accesibilidad</span>
+          <strong>AA</strong>
+        </article>
+      </section>
+
+      <section id="diagnostic" class="section-grid">
+        <div>
+          <p class="eyebrow">Motor adaptativo</p>
+          <h2>Diagnostico inicial</h2>
+          <p>
+            El sistema ajusta dificultad, recursos y evaluaciones segun el
+            rendimiento del estudiante y sus preferencias de aprendizaje.
+          </p>
+        </div>
+
+        <form class="diagnostic" id="diagnosticForm">
+          <label>
+            Area de interes
+            <select id="trackSelect">
+              <option value="software">Desarrollo de Software</option>
+              <option value="ai">Inteligencia Artificial</option>
+              <option value="cloud">Cloud Computing</option>
+              <option value="security">Ciberseguridad</option>
+              <option value="data">Analisis de Datos</option>
+              <option value="accessibility">Educacion Inclusiva</option>
+            </select>
+          </label>
+
+          <label>
+            Nivel actual
+            <input id="levelRange" type="range" min="1" max="5" value="2" />
+          </label>
+
+          <fieldset>
+            <legend>Preferencias</legend>
+            <label><input type="checkbox" value="video" checked /> Videos cortos</label>
+            <label><input type="checkbox" value="practice" checked /> Practica guiada</label>
+            <label><input type="checkbox" value="reader" /> Lectura asistida</label>
+            <label><input type="checkbox" value="vr" /> Simulaciones VR/AR</label>
+          </fieldset>
+
+          <button class="button primary" type="submit">Generar ruta</button>
+        </form>
+      </section>
+
+      <section id="courses" class="section-band">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Catalogo</p>
+            <h2>Rutas recomendadas</h2>
+          </div>
+          <div class="segmented" aria-label="Filtro de cursos">
+            <button class="active" data-filter="all">Todos</button>
+            <button data-filter="stem">STEM</button>
+            <button data-filter="career">Carrera</button>
+          </div>
+        </div>
+
+        <div class="course-grid" id="courseGrid"></div>
+      </section>
+
+      <section id="tutor" class="section-grid">
+        <div>
+          <p class="eyebrow">Tutor virtual</p>
+          <h2>Asistente IA</h2>
+          <p>
+            Simula apoyo continuo con respuestas guiadas, retroalimentacion
+            inmediata y sugerencias de refuerzo.
+          </p>
+        </div>
+
+        <div class="chat">
+          <div class="chat-log" id="chatLog" aria-live="polite">
+            <p><strong>Tutor:</strong> Hola, Ramon. Puedo ayudarte a elegir tu siguiente modulo.</p>
+          </div>
+          <form id="chatForm">
+            <input id="chatInput" type="text" placeholder="Escribe una pregunta..." />
+            <button class="button primary" type="submit">Enviar</button>
+          </form>
+        </div>
+      </section>
+
+      <section id="certifications" class="section-band">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Blockchain-ready</p>
+            <h2>Certificaciones digitales</h2>
+          </div>
+        </div>
+        <div class="cert-list">
+          <article>
+            <span>En progreso</span>
+            <strong>Full Stack .NET + React</strong>
+            <meter min="0" max="100" value="74">74%</meter>
+          </article>
+          <article>
+            <span>Disponible</span>
+            <strong>Fundamentos de Machine Learning</strong>
+            <meter min="0" max="100" value="35">35%</meter>
+          </article>
+          <article>
+            <span>Verificable</span>
+            <strong>Accesibilidad Web Aplicada</strong>
+            <meter min="0" max="100" value="92">92%</meter>
+          </article>
+        </div>
+      </section>
+
+      <section id="community" class="section-grid">
+        <div>
+          <p class="eyebrow">Aprendizaje social</p>
+          <h2>Comunidad</h2>
+          <p>
+            Grupos de estudio, foros moderados y mentorias para mantener el
+            aprendizaje colaborativo e inclusivo.
+          </p>
+        </div>
+        <div class="forum-list">
+          <button>Grupo: IA aplicada para principiantes</button>
+          <button>Foro: Preguntas de C#.NET</button>
+          <button>Mentoria: Preparacion para certificacion Azure</button>
+        </div>
+      </section>
+
+      <section id="resources" class="section-band resources">
+        <div>
+          <p class="eyebrow">Biblioteca</p>
+          <h2>Recursos de apoyo</h2>
+        </div>
+        <div class="resource-grid">
+          <article>Guia de accesibilidad WCAG</article>
+          <article>Plantilla de plan de estudio semanal</article>
+          <article>Laboratorio de SQL y NoSQL</article>
+          <article>Simulacion de entrevista tecnica</article>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
