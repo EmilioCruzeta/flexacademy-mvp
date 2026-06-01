@@ -8,55 +8,121 @@
   </head>
   <body class="is-locked">
     <section class="login-screen" id="loginScreen" aria-labelledby="loginTitle">
-      <div class="login-visual" aria-hidden="true">
-        <span class="brand-mark">F</span>
-        <div class="login-orbit">
-          <span>IA</span>
-          <span>STEM</span>
-          <span>AA</span>
+      <div class="landing-content">
+        <div class="landing-brand">
+          <span class="brand-mark" aria-hidden="true">F</span>
+          <div>
+            <strong>FlexAcademy</strong>
+            <span>Adaptive STEM Learning</span>
+          </div>
+        </div>
+
+        <div class="landing-copy">
+          <p class="eyebrow">Educacion inclusiva con tecnologia</p>
+          <h1 id="loginTitle">Aprendizaje adaptativo para el talento digital</h1>
+          <p>
+            Cursos personalizados, tutor virtual, evaluaciones dinamicas y
+            certificaciones verificables para preparar estudiantes en areas de
+            alta demanda.
+          </p>
+        </div>
+
+        <div class="offering-grid" aria-label="Cursos y servicios ofrecidos">
+          <article>
+            <span>01</span>
+            <strong>Software y Cloud</strong>
+            <p>C#.NET, React, SQL, Azure Functions y arquitecturas escalables.</p>
+          </article>
+          <article>
+            <span>02</span>
+            <strong>IA y Datos</strong>
+            <p>Machine Learning, analisis de datos, etica de IA y personalizacion.</p>
+          </article>
+          <article>
+            <span>03</span>
+            <strong>Accesibilidad</strong>
+            <p>Experiencias inclusivas, WCAG, lectura asistida y soporte adaptativo.</p>
+          </article>
+          <article>
+            <span>04</span>
+            <strong>Certificaciones</strong>
+            <p>Credenciales digitales, progreso medible y verificacion segura.</p>
+          </article>
+        </div>
+
+        <div class="mission-grid">
+          <article>
+            <strong>Mision</strong>
+            <p>Hacer que la educacion tecnologica sea accesible, practica y personalizada.</p>
+          </article>
+          <article>
+            <strong>Vision</strong>
+            <p>Ser una plataforma referente para formar talento STEM diverso e inclusivo.</p>
+          </article>
+          <article>
+            <strong>Objetivos</strong>
+            <p>Reducir brechas educativas, aumentar empleabilidad y medir avances reales.</p>
+          </article>
         </div>
       </div>
 
-      <form class="login-card" id="loginForm" novalidate>
-        <p class="eyebrow">Acceso seguro</p>
-        <h1 id="loginTitle">FlexAcademy</h1>
-        <p>
-          Entra al panel de aprendizaje adaptativo para administrar cursos,
-          revisar progreso y probar las funciones del MVP.
-        </p>
+      <div class="login-panel">
+        <form class="login-card" id="loginForm" novalidate>
+          <p class="eyebrow">Portal de acceso</p>
+          <h2>Ingresar al panel</h2>
+          <p>
+            Usa la cuenta de prueba para entrar al MVP y explorar las funciones
+            administrativas y academicas.
+          </p>
 
-        <div class="demo-credentials" aria-label="Credenciales de prueba">
-          <span>Usuario: <strong>admin</strong></span>
-          <span>Clave: <strong>admin</strong></span>
-        </div>
+          <div class="demo-credentials" aria-label="Credenciales de prueba">
+            <span>Usuario: <strong>admin</strong></span>
+            <span>Clave: <strong>admin</strong></span>
+          </div>
 
-        <label>
-          Usuario
-          <input id="usernameInput" name="username" type="text" autocomplete="username" required />
-        </label>
-
-        <label>
-          Clave
-          <input
-            id="passwordInput"
-            name="password"
-            type="password"
-            autocomplete="current-password"
-            required
-          />
-        </label>
-
-        <div class="form-row">
-          <label class="inline-check">
-            <input id="rememberInput" type="checkbox" checked />
-            Mantener sesion
+          <label>
+            Usuario
+            <input id="usernameInput" name="username" type="text" autocomplete="username" required />
           </label>
-          <button class="text-button" id="fillDemoButton" type="button">Usar prueba</button>
-        </div>
 
-        <p class="form-error" id="loginError" role="alert"></p>
-        <button class="button primary" type="submit">Entrar</button>
-      </form>
+          <label>
+            Clave
+            <input
+              id="passwordInput"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required
+            />
+          </label>
+
+          <div class="form-row">
+            <label class="inline-check">
+              <input id="rememberInput" type="checkbox" checked />
+              Mantener sesion
+            </label>
+            <button class="text-button" id="fillDemoButton" type="button">Usar prueba</button>
+          </div>
+
+          <p class="form-error" id="loginError" role="alert"></p>
+          <button class="button primary" type="submit">Entrar</button>
+        </form>
+
+        <div class="login-preview" aria-label="Resumen de plataforma">
+          <div>
+            <span>Progreso esperado</span>
+            <strong>+35%</strong>
+          </div>
+          <div>
+            <span>Rutas iniciales</span>
+            <strong>6</strong>
+          </div>
+          <div>
+            <span>Accesibilidad</span>
+            <strong>AA</strong>
+          </div>
+        </div>
+      </div>
     </section>
 
     <div class="app-shell" id="appShell" aria-hidden="true">
@@ -71,11 +137,14 @@
 
         <nav class="nav">
           <a class="active" href="#dashboard">Dashboard</a>
+          <a href="#assessment">Evaluaciones</a>
           <a href="#courses">Cursos</a>
+          <a href="#immersive">VR/AR</a>
           <a href="#tutor">Tutor IA</a>
           <a href="#certifications">Certificaciones</a>
           <a href="#community">Comunidad</a>
           <a href="#resources">Recursos</a>
+          <a href="#roadmap">Roadmap</a>
           <a href="#admin">Admin</a>
         </nav>
 
@@ -198,6 +267,35 @@
         </form>
       </section>
 
+      <section id="assessment" class="section-grid assessment-section">
+        <div>
+          <p class="eyebrow">Evaluaciones dinamicas</p>
+          <h2>Prueba adaptativa</h2>
+          <p>
+            Simula preguntas que cambian de dificultad segun las respuestas.
+            El resultado actualiza el progreso y recomienda el siguiente paso.
+          </p>
+        </div>
+
+        <form class="assessment-card" id="assessmentForm">
+          <label>
+            Pregunta activa
+            <select id="assessmentAnswer">
+              <option value="">Selecciona una respuesta</option>
+              <option value="correct">Crear una ruta personalizada con datos de avance</option>
+              <option value="partial">Mostrar el mismo contenido a todos los estudiantes</option>
+              <option value="incorrect">Eliminar retroalimentacion hasta el final del curso</option>
+            </select>
+          </label>
+          <div class="assessment-result" aria-live="polite">
+            <span>Puntaje adaptativo</span>
+            <strong id="assessmentScore">Sin evaluar</strong>
+            <p id="assessmentFeedback">Completa la prueba para recibir retroalimentacion inmediata.</p>
+          </div>
+          <button class="button primary" type="submit">Calificar respuesta</button>
+        </form>
+      </section>
+
       <section id="courses" class="section-band">
         <div class="section-heading">
           <div>
@@ -212,6 +310,32 @@
         </div>
 
         <div class="course-grid" id="courseGrid"></div>
+      </section>
+
+      <section id="immersive" class="section-grid immersive-section">
+        <div>
+          <p class="eyebrow">Simulaciones inmersivas</p>
+          <h2>Laboratorio VR/AR</h2>
+          <p>
+            Prototipo de practica inmersiva para explorar conceptos STEM,
+            entrenar habilidades y reforzar aprendizaje con escenarios guiados.
+          </p>
+        </div>
+
+        <div class="immersive-lab">
+          <div class="lab-stage" aria-label="Escenario VR/AR simulado">
+            <span class="lab-node core">STEM</span>
+            <span class="lab-node node-a">IA</span>
+            <span class="lab-node node-b">Datos</span>
+            <span class="lab-node node-c">Azure</span>
+          </div>
+          <div class="lab-controls">
+            <button class="button secondary" type="button" data-simulation="accessibility">Escenario accesible</button>
+            <button class="button secondary" type="button" data-simulation="cloud">Arquitectura cloud</button>
+            <button class="button secondary" type="button" data-simulation="security">Practica seguridad</button>
+          </div>
+          <p id="simulationStatus">Selecciona un escenario para iniciar la practica.</p>
+        </div>
       </section>
 
       <section id="tutor" class="section-grid">
@@ -259,6 +383,14 @@
             <meter min="0" max="100" value="92">92%</meter>
           </article>
         </div>
+        <div class="verification-panel">
+          <div>
+            <p class="eyebrow">Verificacion</p>
+            <h3>Credencial digital</h3>
+            <p id="certificateHash">Hash pendiente de generacion.</p>
+          </div>
+          <button class="button primary" id="verifyCertificateButton" type="button">Generar verificacion</button>
+        </div>
       </section>
 
       <section id="community" class="section-grid">
@@ -283,12 +415,55 @@
           <h2>Recursos de apoyo</h2>
         </div>
         <div class="resource-grid">
-          <article>Guia de accesibilidad WCAG</article>
-          <article>Plantilla de plan de estudio semanal</article>
-          <article>Laboratorio de SQL y NoSQL</article>
-          <article>Simulacion de entrevista tecnica</article>
+          <article>
+            <strong>Guia de accesibilidad WCAG</strong>
+            <button type="button" data-resource="accessibility">Abrir recurso</button>
+          </article>
+          <article>
+            <strong>Plantilla de plan de estudio semanal</strong>
+            <button type="button" data-resource="plan">Abrir recurso</button>
+          </article>
+          <article>
+            <strong>Laboratorio de SQL y NoSQL</strong>
+            <button type="button" data-resource="data">Abrir recurso</button>
+          </article>
+          <article>
+            <strong>Simulacion de entrevista tecnica</strong>
+            <button type="button" data-resource="interview">Abrir recurso</button>
+          </article>
         </div>
       </section>
+
+        <section id="roadmap" class="section-band roadmap-section">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Arquitectura propuesta</p>
+              <h2>Roadmap tecnico</h2>
+            </div>
+          </div>
+          <div class="roadmap-grid">
+            <article>
+              <span>Fase 1</span>
+              <strong>MVP web</strong>
+              <p>Login, rutas, tutor, evaluaciones, certificaciones y recursos.</p>
+            </article>
+            <article>
+              <span>Fase 2</span>
+              <strong>Backend .NET</strong>
+              <p>APIs C#.NET, SQL Server, Entity Framework Core y autenticacion.</p>
+            </article>
+            <article>
+              <span>Fase 3</span>
+              <strong>IA y nube</strong>
+              <p>Azure Cognitive Services, Azure Functions, Cosmos DB y analitica.</p>
+            </article>
+            <article>
+              <span>Fase 4</span>
+              <strong>Escala segura</strong>
+              <p>Docker, Kubernetes, OAuth 2.0, monitoreo y cumplimiento.</p>
+            </article>
+          </div>
+        </section>
 
         <section id="admin" class="section-grid admin-section">
           <div>

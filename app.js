@@ -100,6 +100,9 @@ const defaultState = Object.freeze({
   selectedTrack: null,
   weeklyProgress: 68,
   alerts: 0,
+  assessmentScore: null,
+  lastSimulation: null,
+  certificateHash: null,
 });
 
 const state = loadState();
@@ -123,6 +126,10 @@ const elements = {
   diagnosticForm: document.querySelector("#diagnosticForm"),
   trackSelect: document.querySelector("#trackSelect"),
   levelRange: document.querySelector("#levelRange"),
+  assessmentForm: document.querySelector("#assessmentForm"),
+  assessmentAnswer: document.querySelector("#assessmentAnswer"),
+  assessmentScore: document.querySelector("#assessmentScore"),
+  assessmentFeedback: document.querySelector("#assessmentFeedback"),
   weeklyProgress: document.querySelector("#weeklyProgress"),
   enrolledMetric: document.querySelector("#enrolledMetric"),
   alertMetric: document.querySelector("#alertMetric"),
@@ -132,9 +139,42 @@ const elements = {
   chatInput: document.querySelector("#chatInput"),
   chatLog: document.querySelector("#chatLog"),
   forumList: document.querySelector("#forumList"),
+  simulationStatus: document.querySelector("#simulationStatus"),
+  immersiveLab: document.querySelector(".immersive-lab"),
+  verifyCertificateButton: document.querySelector("#verifyCertificateButton"),
+  certificateHash: document.querySelector("#certificateHash"),
+  resourceGrid: document.querySelector(".resource-grid"),
   noticeForm: document.querySelector("#noticeForm"),
   noticeInput: document.querySelector("#noticeInput"),
   noticeList: document.querySelector("#noticeList"),
+};
+
+const assessmentFeedback = {
+  correct: {
+    score: 96,
+    message: "Respuesta excelente. La personalizacion por datos es el centro del aprendizaje adaptativo.",
+  },
+  partial: {
+    score: 62,
+    message: "Respuesta parcial. El contenido comun puede servir de base, pero falta adaptacion individual.",
+  },
+  incorrect: {
+    score: 35,
+    message: "Necesita refuerzo. La retroalimentacion inmediata es clave para mejorar retencion y progreso.",
+  },
+};
+
+const simulationMessages = {
+  accessibility: "Escenario accesible iniciado: practica navegacion por teclado, lectura asistida y contraste.",
+  cloud: "Arquitectura cloud iniciada: revisa Azure Functions, Cosmos DB y escalabilidad por demanda.",
+  security: "Practica de seguridad iniciada: valida OAuth 2.0, privacidad de datos y control de acceso.",
+};
+
+const resourceMessages = {
+  accessibility: "Recurso abierto: guia WCAG para validar contraste, foco visible y lectores de pantalla.",
+  plan: "Recurso abierto: plantilla semanal con bloques de estudio, practica y retroalimentacion.",
+  data: "Recurso abierto: laboratorio de SQL/NoSQL para consultas, indices y datos en la nube.",
+  interview: "Recurso abierto: simulacion de entrevista tecnica con preguntas de C#.NET, IA y Azure.",
 };
 
 function loadState() {
@@ -236,6 +276,11 @@ function renderMetrics() {
   elements.alertMetric.textContent = String(state.alerts);
   elements.currentTrackLabel.textContent = selected?.label || "Sin diagnostico";
   elements.nextActionLabel.textContent = selected?.action || "Completar diagnostico";
+  elements.assessmentScore.textContent = state.assessmentScore ? `${state.assessmentScore}%` : "Sin evaluar";
+  elements.certificateHash.textContent = state.certificateHash || "Hash pendiente de generacion.";
+  elements.simulationStatus.textContent = state.lastSimulation
+    ? simulationMessages[state.lastSimulation]
+    : "Selecciona un escenario para iniciar la practica.";
 }
 
 function renderCourses(filter = "all") {
@@ -443,6 +488,25 @@ elements.diagnosticForm.addEventListener("submit", (event) => {
   document.querySelector("#tutor").scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
+elements.assessmentForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const selectedAnswer = elements.assessmentAnswer.value;
+  const result = assessmentFeedback[selectedAnswer];
+
+  if (!result) {
+    elements.assessmentFeedback.textContent = "Selecciona una respuesta para calcular el puntaje.";
+    return;
+  }
+
+  state.assessmentScore = result.score;
+  state.weeklyProgress = Math.min(100, Math.round((state.weeklyProgress + result.score) / 2));
+  state.alerts += result.score >= 80 ? 0 : 1;
+  elements.assessmentFeedback.textContent = result.message;
+  saveState();
+  renderMetrics();
+  addChatMessage("Tutor", result.message);
+});
+
 elements.chatForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const question = elements.chatInput.value.trim();
@@ -466,6 +530,39 @@ elements.forumList.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-topic]");
   if (!button) return;
   addChatMessage("Tutor", `Te conecte con la comunidad: ${button.dataset.topic}.`);
+  document.querySelector("#tutor").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+elements.immersiveLab.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-simulation]");
+  if (!button) return;
+
+  state.lastSimulation = button.dataset.simulation;
+  elements.simulationStatus.textContent = simulationMessages[state.lastSimulation];
+  saveState();
+  addChatMessage("Tutor", simulationMessages[state.lastSimulation]);
+});
+
+elements.verifyCertificateButton.addEventListener("click", () => {
+  const seed = `${DEMO_USER.username}-${Date.now()}-${state.completedCourseIds.length}`;
+  const hash = Array.from(seed)
+    .reduce((total, char) => (total * 31 + char.charCodeAt(0)) >>> 0, 2166136261)
+    .toString(16)
+    .padStart(8, "0")
+    .toUpperCase();
+
+  state.certificateHash = `FXA-${hash}-VERIFY`;
+  saveState();
+  renderMetrics();
+  addChatMessage("Tutor", `Certificado verificado con codigo ${state.certificateHash}.`);
+});
+
+elements.resourceGrid.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-resource]");
+  if (!button) return;
+
+  const message = resourceMessages[button.dataset.resource];
+  addChatMessage("Tutor", message);
   document.querySelector("#tutor").scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
