@@ -127,6 +127,8 @@ const defaultState = Object.freeze({
   enrolledCourseIds: [],
   completedCourseIds: [],
   notices: ["Bienvenido al panel admin de FlexAcademy."],
+  customCourses: [],
+  editingCourseId: null,
   selectedTrack: null,
   weeklyProgress: 68,
   streakDays: 12,
@@ -184,6 +186,18 @@ const elements = {
   verifyCertificateButton: document.querySelector("#verifyCertificateButton"),
   certificateHash: document.querySelector("#certificateHash"),
   resourceGrid: document.querySelector(".resource-grid"),
+  courseForm: document.querySelector("#courseForm"),
+  courseIdInput: document.querySelector("#courseIdInput"),
+  courseTitleInput: document.querySelector("#courseTitleInput"),
+  courseTypeInput: document.querySelector("#courseTypeInput"),
+  courseLevelInput: document.querySelector("#courseLevelInput"),
+  courseDescriptionInput: document.querySelector("#courseDescriptionInput"),
+  courseModulesInput: document.querySelector("#courseModulesInput"),
+  courseQuestionInput: document.querySelector("#courseQuestionInput"),
+  courseAnswerInput: document.querySelector("#courseAnswerInput"),
+  cancelCourseEditButton: document.querySelector("#cancelCourseEditButton"),
+  courseFormFeedback: document.querySelector("#courseFormFeedback"),
+  adminCourseList: document.querySelector("#adminCourseList"),
   noticeForm: document.querySelector("#noticeForm"),
   noticeInput: document.querySelector("#noticeInput"),
   noticeList: document.querySelector("#noticeList"),
@@ -228,14 +242,16 @@ function loadState() {
 
 function normalizeState(savedState = {}) {
   const merged = { ...defaultState, ...(savedState || {}) };
-  const knownCourseIds = new Set(courses.map((course) => course.id));
+  merged.customCourses = normalizeCustomCourses(merged.customCourses || []);
+  const knownCourseIds = new Set(getAllCourses(merged.customCourses).map((course) => course.id));
 
   merged.enrolledCourseIds = [...new Set(merged.enrolledCourseIds || [])].filter((courseId) => knownCourseIds.has(courseId));
   merged.completedCourseIds = [...new Set(merged.completedCourseIds || [])].filter((courseId) => knownCourseIds.has(courseId));
   merged.notices = Array.isArray(merged.notices) ? merged.notices : [...defaultState.notices];
-  merged.courseProgress = normalizeCourseProgress(merged.courseProgress || {}, merged.completedCourseIds);
+  merged.courseProgress = normalizeCourseProgress(merged.courseProgress || {}, merged.completedCourseIds, merged.customCourses);
   merged.quizResults = typeof merged.quizResults === "object" && merged.quizResults ? merged.quizResults : {};
   merged.courseActivity = typeof merged.courseActivity === "object" && merged.courseActivity ? merged.courseActivity : {};
+  merged.editingCourseId = typeof merged.editingCourseId === "string" ? merged.editingCourseId : null;
   merged.streakDays = Number.isFinite(merged.streakDays) ? merged.streakDays : defaultState.streakDays;
   merged.weeklyProgress = Number.isFinite(merged.weeklyProgress) ? merged.weeklyProgress : defaultState.weeklyProgress;
   merged.alerts = Number.isFinite(merged.alerts) ? merged.alerts : defaultState.alerts;
@@ -243,8 +259,42 @@ function normalizeState(savedState = {}) {
   return merged;
 }
 
-function normalizeCourseProgress(progressByCourse, completedCourseIds) {
-  return courses.reduce((progress, course) => {
+function normalizeCustomCourses(customCourses) {
+  if (!Array.isArray(customCourses)) return [];
+
+  return customCourses
+    .map((course) => ({
+      id: String(course.id || makeFallbackCourseId(course.title || "curso")).trim(),
+      title: String(course.title || "Curso sin titulo").trim().slice(0, 80),
+      type: course.type === "career" ? "career" : "stem",
+      level: ["Inicial", "Intermedio", "Avanzado"].includes(course.level) ? course.level : "Inicial",
+      progress: 0,
+      description: String(course.description || "Ruta creada desde el panel admin.").trim().slice(0, 180),
+      modules: Array.isArray(course.modules) ? course.modules.map((item) => String(item).trim()).filter(Boolean).slice(0, 8) : [],
+      quiz: {
+        question: String(course.quiz?.question || "Que concepto principal trabaja esta ruta?").trim().slice(0, 140),
+        answer: String(course.quiz?.answer || "Practica guiada").trim().slice(0, 80),
+      },
+      isCustom: true,
+    }))
+    .filter((course) => course.title && course.modules.length >= 2);
+}
+
+function makeFallbackCourseId(title) {
+  return `custom-${String(title || "curso")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 48) || "curso"}`;
+}
+function getAllCourses(customCourses = state?.customCourses || []) {
+  return [...courses, ...customCourses];
+}
+
+function normalizeCourseProgress(progressByCourse, completedCourseIds, customCourses = []) {
+  return getAllCourses(customCourses).reduce((progress, course) => {
     const savedModules = Array.isArray(progressByCourse[course.id]) ? progressByCourse[course.id] : [];
     const moduleIndexes = completedCourseIds.includes(course.id)
       ? course.modules.map((_, index) => index)
@@ -360,7 +410,8 @@ function renderMetrics() {
 }
 
 function renderCourses(filter = "all") {
-  const visibleCourses = filter === "all" ? courses : courses.filter((course) => course.type === filter);
+  const allCourses = getAllCourses();
+  const visibleCourses = filter === "all" ? allCourses : allCourses.filter((course) => course.type === filter);
   elements.courseGrid.replaceChildren(...visibleCourses.map(createCourseCard));
 }
 
@@ -419,7 +470,7 @@ function createCourseCard(course) {
 }
 
 function getCourseById(courseId) {
-  return courses.find((course) => course.id === courseId);
+  return getAllCourses().find((course) => course.id === courseId);
 }
 
 function getCompletedModules(courseId) {
@@ -627,6 +678,134 @@ function addChatMessage(author, message) {
   elements.chatLog.scrollTop = elements.chatLog.scrollHeight;
 }
 
+function renderAdminCourses() {
+  if (!state.customCourses.length) {
+    elements.adminCourseList.replaceChildren(createElement("p", { text: "No hay cursos personalizados. Crea una ruta desde el formulario." }));
+    return;
+  }
+
+  const courseItems = state.customCourses.map((course) => {
+    const item = createElement("article", { className: "admin-course-item" });
+    const content = createElement("div");
+    const actions = createElement("div", { className: "admin-course-actions" });
+    const editButton = createElement("button", {
+      text: "Editar",
+      type: "button",
+      dataset: { adminAction: "edit-course", courseId: course.id },
+    });
+    const deleteButton = createElement("button", {
+      text: "Eliminar",
+      type: "button",
+      dataset: { adminAction: "delete-course", courseId: course.id },
+    });
+
+    content.append(
+      createElement("strong", { text: course.title }),
+      createElement("p", { text: `${course.level} | ${course.type === "stem" ? "STEM" : "Carrera"} | ${course.modules.length} modulos` }),
+    );
+    actions.append(editButton, deleteButton);
+    item.append(content, actions);
+    return item;
+  });
+
+  elements.adminCourseList.replaceChildren(...courseItems);
+}
+
+function getCourseFormData() {
+  const modules = elements.courseModulesInput.value
+    .split(/\r?\n|,/)
+    .map((moduleName) => moduleName.trim())
+    .filter(Boolean)
+    .slice(0, 8);
+  const title = elements.courseTitleInput.value.trim();
+
+  return {
+    id: elements.courseIdInput.value || makeCourseId(title),
+    title,
+    type: elements.courseTypeInput.value,
+    level: elements.courseLevelInput.value,
+    progress: 0,
+    description: elements.courseDescriptionInput.value.trim(),
+    modules,
+    quiz: {
+      question: elements.courseQuestionInput.value.trim(),
+      answer: elements.courseAnswerInput.value.trim(),
+    },
+    isCustom: true,
+  };
+}
+
+function validateCourseDraft(course) {
+  if (!course.title) return "Escribe un titulo para el curso.";
+  if (!course.description) return "Agrega una descripcion breve.";
+  if (course.modules.length < 2) return "Agrega al menos dos modulos.";
+  if (!course.quiz.question || !course.quiz.answer) return "Completa la pregunta y respuesta del quiz.";
+  return "";
+}
+
+function saveCustomCourse(course) {
+  const existingIndex = state.customCourses.findIndex((item) => item.id === course.id);
+  const normalizedCourse = normalizeCustomCourses([course])[0];
+
+  if (!normalizedCourse) return;
+  if (existingIndex >= 0) {
+    state.customCourses.splice(existingIndex, 1, normalizedCourse);
+  } else {
+    state.customCourses.unshift(normalizedCourse);
+  }
+
+  state.courseProgress = normalizeCourseProgress(state.courseProgress, state.completedCourseIds, state.customCourses);
+  state.editingCourseId = null;
+}
+
+function loadCourseIntoForm(courseId) {
+  const course = state.customCourses.find((item) => item.id === courseId);
+  if (!course) return;
+
+  state.editingCourseId = course.id;
+  elements.courseIdInput.value = course.id;
+  elements.courseTitleInput.value = course.title;
+  elements.courseTypeInput.value = course.type;
+  elements.courseLevelInput.value = course.level;
+  elements.courseDescriptionInput.value = course.description;
+  elements.courseModulesInput.value = course.modules.join("\n");
+  elements.courseQuestionInput.value = course.quiz.question;
+  elements.courseAnswerInput.value = course.quiz.answer;
+  elements.courseFormFeedback.textContent = "Editando curso personalizado.";
+  elements.courseTitleInput.focus();
+}
+
+function resetCourseForm() {
+  elements.courseForm.reset();
+  elements.courseIdInput.value = "";
+  elements.courseFormFeedback.textContent = "";
+  state.editingCourseId = null;
+}
+
+function deleteCustomCourse(courseId) {
+  state.customCourses = state.customCourses.filter((course) => course.id !== courseId);
+  state.enrolledCourseIds = state.enrolledCourseIds.filter((id) => id !== courseId);
+  state.completedCourseIds = state.completedCourseIds.filter((id) => id !== courseId);
+  if (state.activeCourseId === courseId) state.activeCourseId = null;
+  delete state.courseProgress[courseId];
+  delete state.quizResults[courseId];
+  delete state.courseActivity[courseId];
+}
+
+function makeCourseId(title) {
+  const slug = String(title || "curso")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 48);
+  const baseId = `custom-${slug || "curso"}`;
+  const existingIds = new Set(getAllCourses().map((course) => course.id));
+
+  if (!existingIds.has(baseId)) return baseId;
+  return `${baseId}-${Date.now().toString(36)}`;
+}
 function renderNotices() {
   if (!state.notices.length) {
     elements.noticeList.replaceChildren(createElement("p", { text: "No hay avisos activos." }));
@@ -913,6 +1092,45 @@ elements.resourceGrid.addEventListener("click", (event) => {
   document.querySelector("#tutor").scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
+elements.courseForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const course = getCourseFormData();
+  const error = validateCourseDraft(course);
+
+  if (error) {
+    elements.courseFormFeedback.textContent = error;
+    return;
+  }
+
+  saveCustomCourse(course);
+  resetCourseForm();
+  saveState();
+  renderApp();
+  addChatMessage("Tutor", `Curso personalizado guardado: ${course.title}.`);
+});
+
+elements.cancelCourseEditButton.addEventListener("click", () => {
+  resetCourseForm();
+  saveState();
+});
+
+elements.adminCourseList.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-admin-action]");
+  if (!button) return;
+
+  const courseId = button.dataset.courseId;
+  if (button.dataset.adminAction === "edit-course") {
+    loadCourseIntoForm(courseId);
+    return;
+  }
+
+  if (button.dataset.adminAction === "delete-course") {
+    deleteCustomCourse(courseId);
+    resetCourseForm();
+    saveState();
+    renderApp();
+  }
+});
 elements.noticeForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const notice = elements.noticeInput.value.trim();

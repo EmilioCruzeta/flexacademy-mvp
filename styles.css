@@ -603,6 +603,11 @@ p {
 }
 
 label,
+textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
 fieldset {
   display: grid;
   gap: 8px;
@@ -611,7 +616,8 @@ fieldset {
 }
 
 input,
-select {
+select,
+textarea {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -619,6 +625,11 @@ select {
   font: inherit;
   color: var(--ink);
   background: #ffffff;
+}
+
+textarea {
+  min-height: 92px;
+  resize: vertical;
 }
 
 fieldset {
@@ -1021,7 +1032,9 @@ meter {
 }
 
 .notice-form,
-.notice-list {
+.notice-list,
+.course-form,
+.admin-course-list {
   padding: 18px;
   background: var(--panel);
   border: 1px solid var(--line);
@@ -1029,7 +1042,8 @@ meter {
   box-shadow: var(--shadow);
 }
 
-.notice-form {
+.notice-form,
+.course-form {
   display: grid;
   gap: 14px;
 }
@@ -1040,6 +1054,59 @@ meter {
   min-height: 92px;
 }
 
+.admin-course-list {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-actions,
+.admin-course-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.admin-feedback {
+  min-height: 20px;
+  margin: 0;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.admin-course-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.admin-course-item strong,
+.admin-course-item p {
+  margin: 0;
+}
+
+.admin-course-actions button {
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.admin-course-actions button:last-child {
+  color: var(--rose);
+}
 .notice-item {
   display: flex;
   align-items: center;

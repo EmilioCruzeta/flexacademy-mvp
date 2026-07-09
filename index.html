@@ -499,6 +499,56 @@
           </div>
 
           <div class="admin-tools">
+            <form class="course-form" id="courseForm">
+              <input id="courseIdInput" type="hidden" />
+              <label>
+                Titulo del curso
+                <input id="courseTitleInput" type="text" maxlength="80" placeholder="Ej. Fundamentos de SQL Server" required />
+              </label>
+              <div class="admin-form-grid">
+                <label>
+                  Categoria
+                  <select id="courseTypeInput">
+                    <option value="stem">STEM</option>
+                    <option value="career">Carrera</option>
+                  </select>
+                </label>
+                <label>
+                  Nivel
+                  <select id="courseLevelInput">
+                    <option value="Inicial">Inicial</option>
+                    <option value="Intermedio">Intermedio</option>
+                    <option value="Avanzado">Avanzado</option>
+                  </select>
+                </label>
+              </div>
+              <label>
+                Descripcion
+                <textarea id="courseDescriptionInput" maxlength="180" rows="3" placeholder="Resumen breve de la ruta" required></textarea>
+              </label>
+              <label>
+                Modulos
+                <textarea id="courseModulesInput" rows="4" placeholder="Un modulo por linea" required></textarea>
+              </label>
+              <div class="admin-form-grid">
+                <label>
+                  Pregunta del quiz
+                  <input id="courseQuestionInput" type="text" maxlength="140" placeholder="Pregunta corta" required />
+                </label>
+                <label>
+                  Respuesta esperada
+                  <input id="courseAnswerInput" type="text" maxlength="80" placeholder="Respuesta" required />
+                </label>
+              </div>
+              <div class="admin-actions">
+                <button class="button primary" type="submit">Guardar curso</button>
+                <button class="button secondary" id="cancelCourseEditButton" type="button">Limpiar</button>
+              </div>
+              <p class="admin-feedback" id="courseFormFeedback" aria-live="polite"></p>
+            </form>
+
+            <div class="admin-course-list" id="adminCourseList" aria-live="polite"></div>
+
             <form class="notice-form" id="noticeForm">
               <label>
                 Nuevo aviso

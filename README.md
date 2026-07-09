@@ -3,13 +3,13 @@
 Prototipo inicial de la plataforma descrita en el plan de proyecto:
 
 - Aprendizaje adaptativo con diagnostico inicial.
-- Catalogo de rutas STEM y desarrollo profesional.
+- Catalogo de rutas STEM, desarrollo profesional y cursos personalizados.
 - Tutor virtual simulado.
 - Certificaciones digitales.
 - Comunidad de estudio.
 - Recursos de apoyo y opciones de accesibilidad.
 - Login de prueba con sesion local.
-- Panel admin para publicar avisos.
+- Panel admin para publicar avisos y crear/editar cursos personalizados.
 - Inscripcion, actividad, racha y avance de cursos guardados en el navegador.
 - Evaluaciones dinamicas con retroalimentacion inmediata.
 - Laboratorio VR/AR simulado.
