@@ -16,6 +16,7 @@ Prototipo inicial de la plataforma descrita en el plan de proyecto:
 - Verificacion de certificados digitales.
 - Roadmap tecnico alineado a .NET, Azure, IA, Docker y Kubernetes.
 - Pagina de inicio profesional con oferta de cursos, mision, vision, objetivos y acceso lateral.
+- Vista "Mi aprendizaje" con detalle de curso, modulos, quiz y progreso individual.
 
 ## Como abrirlo
 

@@ -17,6 +17,11 @@ const courses = [
     level: "Intermedio",
     progress: 74,
     description: "APIs, Entity Framework Core, componentes reutilizables y despliegue en Azure.",
+    modules: ["Fundamentos C#.NET", "APIs con Entity Framework", "React y componentes", "Despliegue en Azure"],
+    quiz: {
+      question: "Que pieza conecta la API con SQL Server en esta ruta?",
+      answer: "Entity Framework Core",
+    },
   },
   {
     id: "machine-learning",
@@ -25,6 +30,11 @@ const courses = [
     level: "Inicial",
     progress: 35,
     description: "Modelos supervisados, evaluacion, sesgos y uso responsable de IA.",
+    modules: ["Datos de entrenamiento", "Modelos supervisados", "Evaluacion de precision", "Etica y sesgos"],
+    quiz: {
+      question: "Que practica ayuda a medir si un modelo generaliza bien?",
+      answer: "Evaluacion de precision",
+    },
   },
   {
     id: "azure-cloud",
@@ -33,6 +43,11 @@ const courses = [
     level: "Inicial",
     progress: 42,
     description: "Azure Functions, Cosmos DB, almacenamiento, seguridad y costos.",
+    modules: ["Servicios cloud", "Azure Functions", "Cosmos DB", "Costos y escalabilidad"],
+    quiz: {
+      question: "Que servicio permite ejecutar logica serverless en Azure?",
+      answer: "Azure Functions",
+    },
   },
   {
     id: "cybersecurity",
@@ -41,6 +56,11 @@ const courses = [
     level: "Intermedio",
     progress: 51,
     description: "OAuth 2.0, gestion de datos, riesgos, cumplimiento y respuesta a incidentes.",
+    modules: ["Principios de seguridad", "OAuth 2.0", "Privacidad de datos", "Respuesta a incidentes"],
+    quiz: {
+      question: "Que protocolo se usa para autorizacion segura en esta ruta?",
+      answer: "OAuth 2.0",
+    },
   },
   {
     id: "accessibility",
@@ -49,6 +69,11 @@ const courses = [
     level: "Avanzado",
     progress: 92,
     description: "Diseno inclusivo, lectores de pantalla, navegacion por teclado y WCAG.",
+    modules: ["WCAG", "Lectores de pantalla", "Navegacion por teclado", "Pruebas inclusivas"],
+    quiz: {
+      question: "Que guia se usa para validar accesibilidad web?",
+      answer: "WCAG",
+    },
   },
   {
     id: "leadership",
@@ -57,6 +82,11 @@ const courses = [
     level: "Inicial",
     progress: 28,
     description: "Comunicacion, resolucion de conflictos y seguimiento de proyectos.",
+    modules: ["Comunicacion efectiva", "Resolucion de conflictos", "Gestion de equipos", "Seguimiento de proyectos"],
+    quiz: {
+      question: "Que habilidad ayuda a manejar desacuerdos dentro de un equipo?",
+      answer: "Resolucion de conflictos",
+    },
   },
 ];
 
@@ -103,6 +133,9 @@ const defaultState = Object.freeze({
   assessmentScore: null,
   lastSimulation: null,
   certificateHash: null,
+  activeCourseId: null,
+  courseProgress: {},
+  quizResults: {},
 });
 
 const state = loadState();
@@ -119,6 +152,7 @@ const elements = {
   activeUserLabel: document.querySelector("#activeUserLabel"),
   logoutButton: document.querySelector("#logoutButton"),
   courseGrid: document.querySelector("#courseGrid"),
+  learningPanel: document.querySelector("#learningPanel"),
   filterButtons: document.querySelectorAll("[data-filter]"),
   navLinks: document.querySelectorAll(".nav a"),
   largeTextToggle: document.querySelector("#largeTextToggle"),
@@ -259,6 +293,7 @@ function createElement(tagName, options = {}) {
 
 function renderApp() {
   renderCourses(getActiveFilter());
+  renderLearningPanel();
   renderMetrics();
   renderNotices();
 }
@@ -304,6 +339,12 @@ function createCourseCard(course) {
   });
   const progressBar = createElement("span");
   const actions = createElement("div", { className: "course-actions" });
+  const routeButton = createElement("button", {
+    className: "button secondary",
+    text: "Ver ruta",
+    type: "button",
+    dataset: { action: "view", courseId: course.id },
+  });
   const enrollButton = createElement("button", {
     className: "button secondary",
     text: isEnrolled ? "Inscrito" : "Inscribirme",
@@ -321,16 +362,109 @@ function createCourseCard(course) {
   enrollButton.disabled = isEnrolled;
   completeButton.disabled = isCompleted;
   progress.append(progressBar);
-  actions.append(enrollButton, completeButton);
+  actions.append(routeButton, enrollButton, completeButton);
   card.append(tag, title, description, progress, actions);
 
   return card;
 }
 
+function getCourseById(courseId) {
+  return courses.find((course) => course.id === courseId);
+}
+
+function getCourseProgress(courseId) {
+  const completedModules = state.courseProgress[courseId] || [];
+  const course = getCourseById(courseId);
+  if (!course) return 0;
+  return Math.round((completedModules.length / course.modules.length) * 100);
+}
+
+function renderLearningPanel() {
+  const course = getCourseById(state.activeCourseId);
+
+  if (!course) {
+    const empty = createElement("div", { className: "empty-state" });
+    empty.append(
+      createElement("strong", { text: "Selecciona un curso" }),
+      createElement("p", { text: "Usa el boton Ver ruta en el catalogo para cargar su contenido." }),
+    );
+    elements.learningPanel.replaceChildren(empty);
+    return;
+  }
+
+  const completedModules = state.courseProgress[course.id] || [];
+  const progress = getCourseProgress(course.id);
+  const header = createElement("div", { className: "learning-header" });
+  const title = createElement("div");
+  const moduleList = createElement("div", { className: "module-list" });
+  const quiz = createElement("form", { className: "course-quiz" });
+  const result = state.quizResults[course.id];
+
+  title.append(
+    createElement("span", { className: "tag", text: course.level }),
+    createElement("h3", { text: course.title }),
+    createElement("p", { text: course.description }),
+  );
+
+  const progressBlock = createElement("div", { className: "learning-progress" });
+  const meter = createElement("div", { className: "progress", ariaLabel: `Progreso ${progress}%` });
+  const meterBar = createElement("span");
+  meterBar.style.width = `${progress}%`;
+  meter.append(meterBar);
+  progressBlock.append(createElement("strong", { text: `${progress}%` }), meter);
+  header.append(title, progressBlock);
+
+  course.modules.forEach((moduleName, index) => {
+    const isDone = completedModules.includes(index);
+    const item = createElement("label", { className: "module-item" });
+    const checkbox = createElement("input", {
+      type: "checkbox",
+      dataset: { moduleIndex: String(index), courseId: course.id },
+    });
+    checkbox.checked = isDone;
+    item.append(checkbox, createElement("span", { text: moduleName }));
+    moduleList.append(item);
+  });
+
+  const quizLabel = createElement("label");
+  const quizInput = createElement("input", {
+    type: "text",
+  });
+  quizInput.id = "courseQuizAnswer";
+  quizInput.placeholder = course.quiz.answer;
+  quizInput.autocomplete = "off";
+  quizLabel.append(course.quiz.question, quizInput);
+  quiz.append(
+    createElement("strong", { text: "Quiz rapido" }),
+    quizLabel,
+    createElement("button", {
+      className: "button primary",
+      text: "Validar quiz",
+      type: "submit",
+      dataset: { courseId: course.id },
+    }),
+  );
+
+  if (result) {
+    quiz.append(createElement("p", { className: result.passed ? "quiz-pass" : "quiz-fail", text: result.message }));
+  }
+
+  elements.learningPanel.replaceChildren(header, moduleList, quiz);
+}
+
 function updateCourse(action, courseId) {
+  if (action === "view") {
+    state.activeCourseId = courseId;
+    saveState();
+    renderLearningPanel();
+    document.querySelector("#learning").scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+
   if (action === "enroll" && !state.enrolledCourseIds.includes(courseId)) {
     state.enrolledCourseIds.push(courseId);
     state.alerts += 1;
+    state.activeCourseId = courseId;
     addChatMessage("Tutor", "Curso inscrito. Te sugiero reservar 25 minutos para el primer modulo.");
   }
 
@@ -524,6 +658,49 @@ elements.courseGrid.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-action]");
   if (!button) return;
   updateCourse(button.dataset.action, button.dataset.courseId);
+});
+
+elements.learningPanel.addEventListener("change", (event) => {
+  const checkbox = event.target.closest("input[data-module-index]");
+  if (!checkbox) return;
+
+  const courseId = checkbox.dataset.courseId;
+  const moduleIndex = Number(checkbox.dataset.moduleIndex);
+  const completedModules = new Set(state.courseProgress[courseId] || []);
+
+  checkbox.checked ? completedModules.add(moduleIndex) : completedModules.delete(moduleIndex);
+  state.courseProgress[courseId] = [...completedModules].sort((a, b) => a - b);
+  state.weeklyProgress = Math.min(100, Math.max(state.weeklyProgress, getCourseProgress(courseId)));
+  saveState();
+  renderApp();
+});
+
+elements.learningPanel.addEventListener("submit", (event) => {
+  const form = event.target.closest(".course-quiz");
+  if (!form) return;
+  event.preventDefault();
+
+  const courseId = form.querySelector("button[data-course-id]").dataset.courseId;
+  const course = getCourseById(courseId);
+  const answer = form.querySelector("#courseQuizAnswer").value.trim().toLowerCase();
+  const expected = course.quiz.answer.toLowerCase();
+  const passed = answer.length > 2 && (answer.includes(expected) || expected.includes(answer));
+
+  state.quizResults[courseId] = {
+    passed,
+    message: passed
+      ? "Respuesta correcta. Quiz aprobado y progreso reforzado."
+      : `Respuesta pendiente. Pista: revisa ${course.quiz.answer}.`,
+  };
+
+  if (passed && !state.completedCourseIds.includes(courseId)) {
+    state.completedCourseIds.push(courseId);
+    state.weeklyProgress = Math.min(100, state.weeklyProgress + 4);
+  }
+
+  saveState();
+  renderApp();
+  addChatMessage("Tutor", state.quizResults[courseId].message);
 });
 
 elements.forumList.addEventListener("click", (event) => {
