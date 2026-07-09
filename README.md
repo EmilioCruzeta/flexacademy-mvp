@@ -10,13 +10,13 @@ Prototipo inicial de la plataforma descrita en el plan de proyecto:
 - Recursos de apoyo y opciones de accesibilidad.
 - Login de prueba con sesion local.
 - Panel admin para publicar avisos.
-- Inscripcion y avance de cursos guardados en el navegador.
+- Inscripcion, actividad, racha y avance de cursos guardados en el navegador.
 - Evaluaciones dinamicas con retroalimentacion inmediata.
 - Laboratorio VR/AR simulado.
 - Verificacion de certificados digitales.
 - Roadmap tecnico alineado a .NET, Azure, IA, Docker y Kubernetes.
 - Pagina de inicio profesional con oferta de cursos, mision, vision, objetivos y acceso lateral.
-- Vista "Mi aprendizaje" con detalle de curso, modulos, quiz y progreso individual.
+- Vista "Mi aprendizaje" con detalle de curso, modulos, quiz y progreso individual persistente.
 
 ## Como abrirlo
 

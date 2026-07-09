@@ -129,6 +129,7 @@ const defaultState = Object.freeze({
   notices: ["Bienvenido al panel admin de FlexAcademy."],
   selectedTrack: null,
   weeklyProgress: 68,
+  streakDays: 12,
   alerts: 0,
   assessmentScore: null,
   lastSimulation: null,
@@ -136,6 +137,8 @@ const defaultState = Object.freeze({
   activeCourseId: null,
   courseProgress: {},
   quizResults: {},
+  courseActivity: {},
+  lastActivity: null,
 });
 
 const state = loadState();
@@ -165,8 +168,11 @@ const elements = {
   assessmentScore: document.querySelector("#assessmentScore"),
   assessmentFeedback: document.querySelector("#assessmentFeedback"),
   weeklyProgress: document.querySelector("#weeklyProgress"),
+  streakMetric: document.querySelector("#streakMetric"),
   enrolledMetric: document.querySelector("#enrolledMetric"),
+  averageProgressMetric: document.querySelector("#averageProgressMetric"),
   alertMetric: document.querySelector("#alertMetric"),
+  lastActivityLabel: document.querySelector("#lastActivityLabel"),
   currentTrackLabel: document.querySelector("#currentTrackLabel"),
   nextActionLabel: document.querySelector("#nextActionLabel"),
   chatForm: document.querySelector("#chatForm"),
@@ -214,10 +220,41 @@ const resourceMessages = {
 function loadState() {
   try {
     const savedState = JSON.parse(localStorage.getItem(STORAGE_KEYS.state));
-    return { ...defaultState, ...savedState };
+    return normalizeState(savedState);
   } catch {
-    return { ...defaultState };
+    return normalizeState();
   }
+}
+
+function normalizeState(savedState = {}) {
+  const merged = { ...defaultState, ...(savedState || {}) };
+  const knownCourseIds = new Set(courses.map((course) => course.id));
+
+  merged.enrolledCourseIds = [...new Set(merged.enrolledCourseIds || [])].filter((courseId) => knownCourseIds.has(courseId));
+  merged.completedCourseIds = [...new Set(merged.completedCourseIds || [])].filter((courseId) => knownCourseIds.has(courseId));
+  merged.notices = Array.isArray(merged.notices) ? merged.notices : [...defaultState.notices];
+  merged.courseProgress = normalizeCourseProgress(merged.courseProgress || {}, merged.completedCourseIds);
+  merged.quizResults = typeof merged.quizResults === "object" && merged.quizResults ? merged.quizResults : {};
+  merged.courseActivity = typeof merged.courseActivity === "object" && merged.courseActivity ? merged.courseActivity : {};
+  merged.streakDays = Number.isFinite(merged.streakDays) ? merged.streakDays : defaultState.streakDays;
+  merged.weeklyProgress = Number.isFinite(merged.weeklyProgress) ? merged.weeklyProgress : defaultState.weeklyProgress;
+  merged.alerts = Number.isFinite(merged.alerts) ? merged.alerts : defaultState.alerts;
+
+  return merged;
+}
+
+function normalizeCourseProgress(progressByCourse, completedCourseIds) {
+  return courses.reduce((progress, course) => {
+    const savedModules = Array.isArray(progressByCourse[course.id]) ? progressByCourse[course.id] : [];
+    const moduleIndexes = completedCourseIds.includes(course.id)
+      ? course.modules.map((_, index) => index)
+      : savedModules;
+
+    progress[course.id] = [...new Set(moduleIndexes)]
+      .filter((index) => Number.isInteger(index) && index >= 0 && index < course.modules.length)
+      .sort((a, b) => a - b);
+    return progress;
+  }, {});
 }
 
 function saveState() {
@@ -305,12 +342,16 @@ function getActiveFilter() {
 
 function renderMetrics() {
   const selected = state.selectedTrack ? recommendations[state.selectedTrack] : null;
+  const averageProgress = getAverageProgress();
 
   elements.weeklyProgress.textContent = `${state.weeklyProgress}%`;
+  elements.streakMetric.textContent = `${state.streakDays} dias`;
   elements.enrolledMetric.textContent = String(state.enrolledCourseIds.length);
+  elements.averageProgressMetric.textContent = `${averageProgress}%`;
   elements.alertMetric.textContent = String(state.alerts);
-  elements.currentTrackLabel.textContent = selected?.label || "Sin diagnostico";
-  elements.nextActionLabel.textContent = selected?.action || "Completar diagnostico";
+  elements.currentTrackLabel.textContent = selected?.label || getActiveCourseLabel();
+  elements.nextActionLabel.textContent = selected?.action || getNextLearningAction();
+  elements.lastActivityLabel.textContent = formatActivity(state.lastActivity);
   elements.assessmentScore.textContent = state.assessmentScore ? `${state.assessmentScore}%` : "Sin evaluar";
   elements.certificateHash.textContent = state.certificateHash || "Hash pendiente de generacion.";
   elements.simulationStatus.textContent = state.lastSimulation
@@ -326,22 +367,25 @@ function renderCourses(filter = "all") {
 function createCourseCard(course) {
   const isEnrolled = state.enrolledCourseIds.includes(course.id);
   const isCompleted = state.completedCourseIds.includes(course.id);
+  const progressValue = getCourseProgress(course.id);
+  const quizResult = state.quizResults[course.id];
   const card = createElement("article", {
-    className: `course-card${isEnrolled ? " is-enrolled" : ""}`,
+    className: `course-card${isEnrolled ? " is-enrolled" : ""}${isCompleted ? " is-completed" : ""}`,
   });
 
   const tag = createElement("span", { className: "tag", text: course.level });
   const title = createElement("strong", { text: course.title });
   const description = createElement("p", { text: course.description });
+  const meta = createElement("div", { className: "course-meta" });
   const progress = createElement("div", {
     className: "progress",
-    ariaLabel: `Progreso ${course.progress}%`,
+    ariaLabel: `Progreso personal ${progressValue}%`,
   });
   const progressBar = createElement("span");
   const actions = createElement("div", { className: "course-actions" });
   const routeButton = createElement("button", {
     className: "button secondary",
-    text: "Ver ruta",
+    text: progressValue > 0 ? "Retomar" : "Ver ruta",
     type: "button",
     dataset: { action: "view", courseId: course.id },
   });
@@ -358,12 +402,18 @@ function createCourseCard(course) {
     dataset: { action: "complete", courseId: course.id },
   });
 
-  progressBar.style.width = `${course.progress}%`;
+  meta.append(
+    createElement("span", { text: `${progressValue}% avance` }),
+    createElement("span", { text: `${getCompletedModules(course.id).length}/${course.modules.length} modulos` }),
+    createElement("span", { text: quizResult?.passed ? "Quiz aprobado" : "Quiz pendiente" }),
+  );
+
+  progressBar.style.width = `${progressValue}%`;
   enrollButton.disabled = isEnrolled;
   completeButton.disabled = isCompleted;
   progress.append(progressBar);
   actions.append(routeButton, enrollButton, completeButton);
-  card.append(tag, title, description, progress, actions);
+  card.append(tag, title, description, meta, progress, actions);
 
   return card;
 }
@@ -372,11 +422,84 @@ function getCourseById(courseId) {
   return courses.find((course) => course.id === courseId);
 }
 
+function getCompletedModules(courseId) {
+  return state.courseProgress[courseId] || [];
+}
+
 function getCourseProgress(courseId) {
-  const completedModules = state.courseProgress[courseId] || [];
   const course = getCourseById(courseId);
   if (!course) return 0;
-  return Math.round((completedModules.length / course.modules.length) * 100);
+  if (state.completedCourseIds.includes(courseId)) return 100;
+  return Math.round((getCompletedModules(courseId).length / course.modules.length) * 100);
+}
+
+function getAverageProgress() {
+  const trackedCourseIds = new Set([
+    ...state.enrolledCourseIds,
+    ...state.completedCourseIds,
+    ...(state.activeCourseId ? [state.activeCourseId] : []),
+  ]);
+
+  if (!trackedCourseIds.size) return 0;
+  const total = [...trackedCourseIds].reduce((sum, courseId) => sum + getCourseProgress(courseId), 0);
+  return Math.round(total / trackedCourseIds.size);
+}
+
+function getActiveCourseLabel() {
+  const activeCourse = getCourseById(state.activeCourseId);
+  return activeCourse ? activeCourse.title : "Sin diagnostico";
+}
+
+function getNextLearningAction() {
+  const activeCourse = getCourseById(state.activeCourseId);
+  if (!activeCourse) return "Completar diagnostico";
+  if (!state.enrolledCourseIds.includes(activeCourse.id)) return "Inscribirte en la ruta";
+  if (getCourseProgress(activeCourse.id) < 100) return "Completar siguiente modulo";
+  return state.quizResults[activeCourse.id]?.passed ? "Generar certificado" : "Validar quiz rapido";
+}
+
+function formatActivity(activity) {
+  if (!activity?.at) return "Sin actividad";
+  const date = new Date(activity.at);
+  const formattedDate = Number.isNaN(date.getTime())
+    ? "fecha reciente"
+    : date.toLocaleDateString("es-DO", { month: "short", day: "numeric" });
+  return `${activity.label} - ${formattedDate}`;
+}
+
+function markActivity(courseId, label) {
+  const now = new Date();
+  const previous = state.lastActivity?.at ? new Date(state.lastActivity.at) : null;
+
+  if (previous && !Number.isNaN(previous.getTime())) {
+    const previousDay = new Date(previous.getFullYear(), previous.getMonth(), previous.getDate());
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const diffDays = Math.round((today - previousDay) / 86400000);
+
+    if (diffDays === 1) state.streakDays += 1;
+    if (diffDays > 1) state.streakDays = 1;
+  }
+
+  const activity = { courseId, label, at: now.toISOString() };
+  state.lastActivity = activity;
+  if (courseId) state.courseActivity[courseId] = activity;
+}
+
+function ensureCourseEnrollment(courseId) {
+  if (!state.enrolledCourseIds.includes(courseId)) {
+    state.enrolledCourseIds.push(courseId);
+  }
+}
+
+function completeCourse(courseId) {
+  const course = getCourseById(courseId);
+  if (!course) return;
+
+  ensureCourseEnrollment(courseId);
+  state.courseProgress[courseId] = course.modules.map((_, index) => index);
+  if (!state.completedCourseIds.includes(courseId)) {
+    state.completedCourseIds.push(courseId);
+  }
 }
 
 function renderLearningPanel() {
@@ -392,13 +515,14 @@ function renderLearningPanel() {
     return;
   }
 
-  const completedModules = state.courseProgress[course.id] || [];
+  const completedModules = getCompletedModules(course.id);
   const progress = getCourseProgress(course.id);
   const header = createElement("div", { className: "learning-header" });
   const title = createElement("div");
   const moduleList = createElement("div", { className: "module-list" });
   const quiz = createElement("form", { className: "course-quiz" });
   const result = state.quizResults[course.id];
+  const activity = state.courseActivity[course.id];
 
   title.append(
     createElement("span", { className: "tag", text: course.level }),
@@ -409,10 +533,23 @@ function renderLearningPanel() {
   const progressBlock = createElement("div", { className: "learning-progress" });
   const meter = createElement("div", { className: "progress", ariaLabel: `Progreso ${progress}%` });
   const meterBar = createElement("span");
+  const resetButton = createElement("button", {
+    className: "button secondary",
+    text: "Reiniciar avance",
+    type: "button",
+    dataset: { action: "reset-progress", courseId: course.id },
+  });
   meterBar.style.width = `${progress}%`;
   meter.append(meterBar);
-  progressBlock.append(createElement("strong", { text: `${progress}%` }), meter);
+  progressBlock.append(createElement("strong", { text: `${progress}%` }), meter, resetButton);
   header.append(title, progressBlock);
+
+  const summary = createElement("div", { className: "learning-summary" });
+  summary.append(
+    createElement("span", { text: `${completedModules.length}/${course.modules.length} modulos completados` }),
+    createElement("span", { text: result?.passed ? "Quiz aprobado" : "Quiz pendiente" }),
+    createElement("span", { text: formatActivity(activity) }),
+  );
 
   course.modules.forEach((moduleName, index) => {
     const isDone = completedModules.includes(index);
@@ -446,38 +583,42 @@ function renderLearningPanel() {
   );
 
   if (result) {
-    quiz.append(createElement("p", { className: result.passed ? "quiz-pass" : "quiz-fail", text: result.message }));
+    const resultText = result.answeredAt ? `${result.message} Guardado ${formatActivity({ label: "quiz", at: result.answeredAt })}.` : result.message;
+    quiz.append(createElement("p", { className: result.passed ? "quiz-pass" : "quiz-fail", text: resultText }));
   }
 
-  elements.learningPanel.replaceChildren(header, moduleList, quiz);
+  elements.learningPanel.replaceChildren(header, summary, moduleList, quiz);
 }
 
 function updateCourse(action, courseId) {
   if (action === "view") {
     state.activeCourseId = courseId;
+    markActivity(courseId, "Ruta abierta");
     saveState();
-    renderLearningPanel();
+    renderApp();
     document.querySelector("#learning").scrollIntoView({ behavior: "smooth", block: "start" });
     return;
   }
 
   if (action === "enroll" && !state.enrolledCourseIds.includes(courseId)) {
-    state.enrolledCourseIds.push(courseId);
-    state.alerts += 1;
+    ensureCourseEnrollment(courseId);
     state.activeCourseId = courseId;
+    state.alerts += 1;
+    markActivity(courseId, "Inscripcion registrada");
     addChatMessage("Tutor", "Curso inscrito. Te sugiero reservar 25 minutos para el primer modulo.");
   }
 
   if (action === "complete" && !state.completedCourseIds.includes(courseId)) {
-    state.completedCourseIds.push(courseId);
-    state.weeklyProgress = Math.min(100, state.weeklyProgress + 5);
+    completeCourse(courseId);
+    state.activeCourseId = courseId;
+    state.weeklyProgress = Math.min(100, Math.max(state.weeklyProgress, getCourseProgress(courseId)));
+    markActivity(courseId, "Curso completado");
     addChatMessage("Tutor", "Excelente avance. Actualice tu progreso semanal y desbloquee la siguiente practica.");
   }
 
   saveState();
   renderApp();
 }
-
 function addChatMessage(author, message) {
   const line = createElement("p");
   const strong = createElement("strong", { text: `${author}:` });
@@ -660,6 +801,19 @@ elements.courseGrid.addEventListener("click", (event) => {
   updateCourse(button.dataset.action, button.dataset.courseId);
 });
 
+elements.learningPanel.addEventListener("click", (event) => {
+  const resetButton = event.target.closest("button[data-action='reset-progress']");
+  if (!resetButton) return;
+
+  const courseId = resetButton.dataset.courseId;
+  state.courseProgress[courseId] = [];
+  state.completedCourseIds = state.completedCourseIds.filter((id) => id !== courseId);
+  delete state.quizResults[courseId];
+  markActivity(courseId, "Avance reiniciado");
+  saveState();
+  renderApp();
+});
+
 elements.learningPanel.addEventListener("change", (event) => {
   const checkbox = event.target.closest("input[data-module-index]");
   if (!checkbox) return;
@@ -668,9 +822,18 @@ elements.learningPanel.addEventListener("change", (event) => {
   const moduleIndex = Number(checkbox.dataset.moduleIndex);
   const completedModules = new Set(state.courseProgress[courseId] || []);
 
+  ensureCourseEnrollment(courseId);
   checkbox.checked ? completedModules.add(moduleIndex) : completedModules.delete(moduleIndex);
   state.courseProgress[courseId] = [...completedModules].sort((a, b) => a - b);
+
+  if (getCourseProgress(courseId) === 100 && state.quizResults[courseId]?.passed) {
+    completeCourse(courseId);
+  } else {
+    state.completedCourseIds = state.completedCourseIds.filter((id) => id !== courseId);
+  }
+
   state.weeklyProgress = Math.min(100, Math.max(state.weeklyProgress, getCourseProgress(courseId)));
+  markActivity(courseId, checkbox.checked ? "Modulo completado" : "Modulo reabierto");
   saveState();
   renderApp();
 });
@@ -686,18 +849,25 @@ elements.learningPanel.addEventListener("submit", (event) => {
   const expected = course.quiz.answer.toLowerCase();
   const passed = answer.length > 2 && (answer.includes(expected) || expected.includes(answer));
 
+  ensureCourseEnrollment(courseId);
   state.quizResults[courseId] = {
     passed,
+    answer: answer || "Sin respuesta",
+    answeredAt: new Date().toISOString(),
     message: passed
-      ? "Respuesta correcta. Quiz aprobado y progreso reforzado."
+      ? "Respuesta correcta. Quiz aprobado y guardado en tu progreso."
       : `Respuesta pendiente. Pista: revisa ${course.quiz.answer}.`,
   };
 
-  if (passed && !state.completedCourseIds.includes(courseId)) {
-    state.completedCourseIds.push(courseId);
-    state.weeklyProgress = Math.min(100, state.weeklyProgress + 4);
+  if (passed && getCourseProgress(courseId) === 100) {
+    completeCourse(courseId);
   }
 
+  if (passed) {
+    state.weeklyProgress = Math.min(100, Math.max(state.weeklyProgress, getCourseProgress(courseId), state.weeklyProgress + 4));
+  }
+
+  markActivity(courseId, passed ? "Quiz aprobado" : "Quiz intentado");
   saveState();
   renderApp();
   addChatMessage("Tutor", state.quizResults[courseId].message);

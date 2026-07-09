@@ -686,6 +686,29 @@ fieldset input,
   border-color: rgba(56, 161, 105, 0.48);
 }
 
+.course-card.is-completed {
+  border-color: rgba(23, 107, 135, 0.55);
+  background: #f8fcfd;
+}
+
+.course-meta,
+.learning-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.course-meta span,
+.learning-summary span {
+  width: fit-content;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #eef5f7;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
 .course-actions {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -746,6 +769,10 @@ fieldset input,
 
 .learning-progress strong {
   font-size: 1.7rem;
+}
+
+.learning-progress .button {
+  width: 100%;
 }
 
 .module-list {

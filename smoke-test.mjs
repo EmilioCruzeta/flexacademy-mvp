@@ -52,6 +52,8 @@ await evaluate(
     "document.querySelector('.course-quiz').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));",
 );
 await delay(300);
+await send(ws, "Page.reload");
+await delay(800);
 
 const result = await evaluate(
   ws,
@@ -61,6 +63,9 @@ const result = await evaluate(
     "modules: document.querySelectorAll('.module-item').length," +
     "checked: document.querySelectorAll('.module-item input:checked').length," +
     "quiz: document.querySelector('.quiz-pass, .quiz-fail').textContent," +
+    "average: document.querySelector('#averageProgressMetric').textContent," +
+    "lastActivity: document.querySelector('#lastActivityLabel').textContent," +
+    "storedProgress: JSON.parse(localStorage.getItem('flexacademy.state')).courseProgress['fullstack-dotnet-react'].length," +
     "courses: document.querySelectorAll('.course-card').length" +
     "})",
 );
